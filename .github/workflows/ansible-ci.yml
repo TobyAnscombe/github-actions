@@ -1,0 +1,76 @@
+###############################################################################
+# Reusable Ansible CI workflow
+#
+# Runs ansible-lint against the repository and optionally installs collections
+# from an ansible-galaxy requirements file first.
+#
+# Usage from any Ansible project:
+#
+#   jobs:
+#     ansible-lint:
+#       uses: TobyAnscombe/github-actions/.github/workflows/ansible-ci.yml@main
+#
+# With custom options:
+#
+#   jobs:
+#     ansible-lint:
+#       uses: TobyAnscombe/github-actions/.github/workflows/ansible-ci.yml@main
+#       with:
+#         ansible_lint_version: "26.1.0"
+#         requirements_file: "requirements.yml"
+###############################################################################
+
+on:
+  workflow_call:
+    inputs:
+      ansible_lint_version:
+        description: "Version of ansible-lint to install via pip"
+        type: string
+        default: "26.1.0"
+      python_version:
+        description: "Python version to use"
+        type: string
+        default: "3.12"
+      working_directory:
+        description: "Directory containing the Ansible content to lint"
+        type: string
+        default: "."
+      requirements_file:
+        description: >
+          Path to ansible-galaxy requirements file relative to working_directory.
+          Set to empty string to skip collection installation.
+        type: string
+        default: "requirements.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ansible-lint:
+    name: Lint Ansible
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Install ansible-lint
+        run: pip install ansible-lint==${{ inputs.ansible_lint_version }}
+
+      - name: Install collections
+        if: inputs.requirements_file != ''
+        run: |
+          if [ -f "${{ inputs.requirements_file }}" ]; then
+            ansible-galaxy collection install -r "${{ inputs.requirements_file }}"
+          fi
+
+      - name: Run ansible-lint
+        run: ansible-lint
