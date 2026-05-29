@@ -30,16 +30,10 @@ on:
         type: string
         default: ""
 
-permissions:
-  contents: read
-
 jobs:
   gitleaks:
     name: Scan for secrets
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write  # required to upload SARIF; silently unavailable on private repos without GHAS
 
     steps:
       - name: Checkout
