@@ -53,9 +53,9 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ inputs.terraform_version }}
 
@@ -78,9 +78,9 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: terraform-linters/setup-tflint@v4
+      - uses: terraform-linters/setup-tflint@v6
         with:
           tflint_version: ${{ inputs.tflint_version }}
 
@@ -104,7 +104,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Trivy
         run: |
