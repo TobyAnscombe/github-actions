@@ -1,0 +1,74 @@
+###############################################################################
+# Reusable branch protection workflow
+#
+# Applies standard protection rules to a branch — blocking force pushes and
+# deletions and optionally requiring status checks to pass before merging.
+#
+# Call this after all CI jobs pass on pushes to the default branch so that
+# the required-checks list is kept in sync with the active CI jobs.
+#
+# Usage:
+#
+#   jobs:
+#     protect-main:
+#       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#       needs: [job-a, job-b]
+#       uses: TobyAnscombe/github-actions/.github/workflows/branch-protection.yml@main
+#       permissions:
+#         administration: write
+#       with:
+#         required_checks: '["job-a", "job-b"]'
+###############################################################################
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        description: "Branch to protect"
+        type: string
+        default: "main"
+      required_checks:
+        description: >
+          JSON array of required status check context names — must match the
+          job IDs in the calling workflow.
+          Example: '["secret-scan", "ansible-lint"]'
+        type: string
+        default: "[]"
+
+jobs:
+  protect-branch:
+    name: Protect branch
+    runs-on: ubuntu-latest
+    permissions:
+      administration: write
+
+    steps:
+      - name: Apply branch protection rules
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          CHECKS='${{ inputs.required_checks }}'
+
+          if [ "$CHECKS" = "[]" ] || [ -z "$CHECKS" ]; then
+            STATUS_CHECKS="null"
+          else
+            STATUS_CHECKS=$(jq -n --argjson c "$CHECKS" \
+              '{"strict": false, "contexts": $c}')
+          fi
+
+          PAYLOAD=$(jq -n \
+            --argjson sc "$STATUS_CHECKS" \
+            '{
+              required_status_checks: $sc,
+              enforce_admins: false,
+              required_pull_request_reviews: null,
+              restrictions: null,
+              allow_force_pushes: false,
+              allow_deletions: false
+            }')
+
+          gh api "repos/$REPO/branches/$BRANCH/protection" \
+            --method PUT \
+            --input - <<< "$PAYLOAD"
