@@ -1,0 +1,25 @@
+name: Claude File Check
+
+on:
+  workflow_call:
+
+jobs:
+  claude-file-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for committed Claude files
+        run: |
+          violations=$(git ls-files | grep -E "(^|/)CLAUDE\.md$|(^|/)tasks/[^/]+\.md$|(^|/)\.claude/" || true)
+          if [ -n "$violations" ]; then
+            echo "ERROR: Claude-specific files found in tracked files:"
+            echo "$violations" | sed 's/^/  /'
+            echo ""
+            echo "Add the following to .gitignore and remove with 'git rm --cached':"
+            echo "  CLAUDE.md"
+            echo "  tasks/*.md"
+            echo "  .claude/"
+            exit 1
+          fi
+          echo "OK: no Claude-specific files in tracked files"
