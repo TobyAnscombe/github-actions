@@ -1,0 +1,41 @@
+name: PowerShell Lint
+
+on:
+  workflow_call:
+    inputs:
+      settings_file:
+        description: Path to PSScriptAnalyzerSettings.psd1 (omit to use built-in rules)
+        type: string
+        default: PSScriptAnalyzerSettings.psd1
+      working_directory:
+        description: Directory to lint recursively
+        type: string
+        default: .
+
+jobs:
+  powershell-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery
+
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $params = @{
+            Path    = "${{ inputs.working_directory }}"
+            Recurse = $true
+          }
+          $settingsFile = "${{ inputs.settings_file }}"
+          if (Test-Path $settingsFile) {
+            $params.Settings = $settingsFile
+          }
+          $results = Invoke-ScriptAnalyzer @params
+          if ($results) {
+            $results | Format-Table -AutoSize
+            exit 1
+          }
+          Write-Host "PSScriptAnalyzer: no issues found"
