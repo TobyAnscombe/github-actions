@@ -16,7 +16,5 @@ jobs:
     if: github.event_name == 'push'
     needs: [secret-scan]
     uses: ./.github/workflows/branch-protection.yml
-    permissions:
-      administration: write
     with:
       required_checks: '["secret-scan / Scan for secrets"]'
