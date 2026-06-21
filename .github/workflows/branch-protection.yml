@@ -14,10 +14,8 @@
 #       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 #       needs: [job-a, job-b]
 #       uses: TobyAnscombe/github-actions/.github/workflows/branch-protection.yml@main
-#       permissions:
-#         administration: write
 #       with:
-#         required_checks: '["job-a", "job-b"]'
+#         required_checks: '["job-a / Sub-job name", "job-b / Sub-job name"]'
 ###############################################################################
 
 on:
@@ -29,9 +27,9 @@ on:
         default: "main"
       required_checks:
         description: >
-          JSON array of required status check context names — must match the
-          job IDs in the calling workflow.
-          Example: '["secret-scan", "ansible-lint"]'
+          JSON array of required status check context names — for reusable
+          workflow calls use "{calling-job-id} / {callee-job-name}" format.
+          Example: '["secret-scan / Scan for secrets", "ansible-lint / Lint Ansible"]'
         type: string
         default: "[]"
 
@@ -39,8 +37,6 @@ jobs:
   protect-branch:
     name: Protect branch
     runs-on: ubuntu-latest
-    permissions:
-      administration: write
 
     steps:
       - name: Apply branch protection rules
