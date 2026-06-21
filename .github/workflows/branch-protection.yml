@@ -14,6 +14,8 @@
 #       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 #       needs: [job-a, job-b]
 #       uses: TobyAnscombe/github-actions/.github/workflows/branch-protection.yml@main
+#       secrets:
+#         token: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
 #       with:
 #         required_checks: '["job-a / Sub-job name", "job-b / Sub-job name"]'
 ###############################################################################
@@ -32,6 +34,10 @@ on:
           Example: '["secret-scan / Scan for secrets", "ansible-lint / Lint Ansible"]'
         type: string
         default: "[]"
+    secrets:
+      token:
+        description: "PAT with repo admin scope for branch protection API (required)"
+        required: true
 
 jobs:
   protect-branch:
@@ -41,7 +47,7 @@ jobs:
     steps:
       - name: Apply branch protection rules
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.token }}
           REPO: ${{ github.repository }}
           BRANCH: ${{ inputs.branch }}
         run: |
