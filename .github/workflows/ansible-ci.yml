@@ -1,8 +1,8 @@
 ###############################################################################
 # Reusable Ansible CI workflow
 #
-# Runs ansible-lint against the repository and optionally installs collections
-# from an ansible-galaxy requirements file first.
+# Runs ansible-lint against the repository and optionally installs roles and
+# collections from an ansible-galaxy requirements file first.
 #
 # Usage from any Ansible project:
 #
@@ -64,6 +64,13 @@ jobs:
 
       - name: Install ansible-lint
         run: pip install ansible-lint==${{ inputs.ansible_lint_version }}
+
+      - name: Install roles
+        if: inputs.requirements_file != ''
+        run: |
+          if [ -f "${{ inputs.requirements_file }}" ]; then
+            ansible-galaxy role install -r "${{ inputs.requirements_file }}"
+          fi
 
       - name: Install collections
         if: inputs.requirements_file != ''
